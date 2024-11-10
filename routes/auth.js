@@ -2,7 +2,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const User = require('../models/login'); // Supondo que você tenha um modelo User no MongoDB
+const User = require('../models/login'); // Certifique-se de que o caminho está correto para o modelo User
 const router = express.Router();
 
 // Rota de cadastro
@@ -46,10 +46,14 @@ router.post('/login', async (req, res) => {
     }
 
     // Gerar o token JWT
-    const token = jwt.sign({ id: user._id }, 'seuSegredoAqui', { expiresIn: '1h' });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'seuSegredoAqui', { expiresIn: '1h' });
 
     // Enviar o token no cookie
-    res.cookie('authToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    res.cookie('authToken', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 1000 * 60 * 60, // Expira em 1 hora
+    });
     res.status(200).json({ message: 'Login bem-sucedido!' });
   } catch (error) {
     console.error('Erro ao fazer login:', error);

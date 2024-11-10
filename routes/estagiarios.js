@@ -32,8 +32,15 @@ router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { nome, area, turno, horario } = req.body;
-    await Estagiario.findByIdAndUpdate(id, { nome, area, turno, horario });
-    res.sendStatus(204);
+    const updatedEstagiario = await Estagiario.findByIdAndUpdate(
+      id, 
+      { nome, area, turno, horario },
+      { new: true } // Retorna o documento atualizado
+    );
+    if (!updatedEstagiario) {
+      return res.status(404).json({ message: 'Estagiário não encontrado' });
+    }
+    res.json(updatedEstagiario);
   } catch (error) {
     console.error('Erro ao atualizar estagiário:', error);
     res.status(500).json({ message: 'Erro ao atualizar estagiário' });
@@ -52,4 +59,4 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+module.exports = router

@@ -1,74 +1,58 @@
 const express = require('express');
-const { ObjectId } = require('mongodb');
-const upload = require('../src/multerconfig'); // Importando a configuração do Multer
-const { connectToDatabase } = require('../MongoConnection'); // Função de conexão com o MongoDB
 const router = express.Router();
+const Employee = require('../models/usuarios'); // Importa o modelo de Employee
 
-// Rota para obter todos os usuários
-router.get('/users', async (req, res) => {
+// Rota para listar os funcionários
+router.get('/api/employees', async (req, res) => {
   try {
-    const db = await connectToDatabase();
-    const usersCollection = db.collection('registerUsers');
-    const users = await usersCollection.find({}).toArray();
-    res.status(200).json(users);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erro ao buscar usuários.' });
+    const employees = await Employee.find();
+    res.json(employees);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 });
 
-// Rota para criar/editar um usuário
-router.post('/users', async (req, res) => {
+// Rota para criar um novo funcionário
+router.post('/api/employees', async (req, res) => {
+  const { name, surname, email, birthDate, phone, role } = req.body;
   try {
-    const { name, email, role, birthDate, phone, avatarUrl, userId } = req.body;
-
-    const profileData = {
-      displayName: name,
+    const newEmployee = new Employee({
+      name,
+      surname,
       email,
-      role,
       birthDate,
       phone,
-      avatarUrl
-    };
-
-    const db = await connectToDatabase();
-    const usersCollection = db.collection('registerUsers');
-
-    if (userId) {
-      // Editar usuário
-      await usersCollection.updateOne({ _id: new ObjectId(userId) }, { $set: profileData });
-      res.status(200).json({ message: 'Usuário atualizado.' });
-    } else {
-      // Criar usuário
-      await usersCollection.insertOne(profileData);
-      res.status(201).json({ message: 'Usuário criado.' });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erro ao salvar usuário.' });
+      role
+    });
+    await newEmployee.save();
+    res.status(201).json(newEmployee); // Retorna o novo funcionário criado
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 });
 
-// Rota para excluir um usuário
-router.delete('/users/:id', async (req, res) => {
+// Rota para atualizar um funcionário
+router.put('/api/employees/:id', async (req, res) => {
+  const { name, surname, email, birthDate, phone, role } = req.body;
   try {
-    const { id } = req.params;
-    const db = await connectToDatabase();
-    const usersCollection = db.collection('registerUsers');
-    await usersCollection.deleteOne({ _id: new ObjectId(id) });
-    res.status(200).json({ message: 'Usuário excluído.' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erro ao excluir usuário.' });
+    const employee = await Employee.findByIdAndUpdate(
+      req.params.id,
+      { name, surname, email, birthDate, phone, role },
+      { new: true }
+    );
+    res.json(employee);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 });
 
-// Rota para upload de imagem
-router.post('/upload-avatar', upload.single('avatar'), (req, res) => {
-  if (req.file) {
-    res.status(200).json({ avatarUrl: `/uploads/${req.file.filename}` });
-  } else {
-    res.status(400).json({ error: 'Falha ao fazer upload da imagem.' });
+// Rota para excluir um funcionário
+router.delete('/api/employees/:id', async (req, res) => {
+  try {
+    await Employee.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: 'Funcionário excluído com sucesso!' });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 });
 

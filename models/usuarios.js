@@ -1,13 +1,16 @@
-// models/User.js
 const mongoose = require('mongoose');
 
-const userSchema = new mongoose.Schema({
-  displayName: { type: String, required: true },
-  email: { type: String, required: true },
+const employeeSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  surname: { type: String },
   birthDate: { type: Date },
   phone: { type: String },
   role: { type: String },
-  avatarUrl: { type: String, default: '' },
+}, {
+  collection: 'employees' // Nome da coleção personalizado
 });
 
-module.exports = mongoose.model('registerUsers', userSchema);
+const Employee = mongoose.models.Employee || mongoose.model('Employee', employeeSchema);
+
+module.exports = Employee;
